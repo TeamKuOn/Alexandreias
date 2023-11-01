@@ -17,6 +17,10 @@ pio project init \
     --board $board \
     --project-option $frameworks  
 
+echo 'upload_speed = 115200
+monitor_speed = 115200
+' >> "./platformio.ini"
+
 ## add ignore dir
 echo '
 # PlatformIO
