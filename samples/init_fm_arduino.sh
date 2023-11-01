@@ -58,30 +58,6 @@ SemaphoreHandle_t xSemaphore;
 /* Global variable */
 #define INT_PIN 2
 
-
-void setup(){
-    /* Serial setting */
-    Serial.begin(115200);
-
-    /* Semaphore setting */
-    if((xSemaphore = xSemaphoreCreateMutex()) != NULL) {
-        xSemaphoreGive((xSemaphore));
-    }
-
-    /* Pin setting */
-    pinMode(INT_PIN, INPUT);
-
-    /* Task setting */
-    xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITIY_1, NULL, CORE_0);
-    xTaskCreateUniversal(TaskSample2, "TaskSample2", 1024, NULL, PRIORITIY_0, NULL, CORE_0);
-
-    /* Interrupt setting */
-    attachInterrupt(digitalPinToInterrupt(INT_PIN), Sample_ISR, FALLING);
-
-}
-
-void loop(){}
-
 void Sample_ISR() {
     if(xSemaphoreTakeFromISR(xSemaphore, NULL) == pdTRUE) {
         // Write some code
@@ -115,6 +91,30 @@ void TaskSample2(void *pvParameters){
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
+
+
+void setup(){
+    /* Serial setting */
+    Serial.begin(115200);
+
+    /* Semaphore setting */
+    if((xSemaphore = xSemaphoreCreateMutex()) != NULL) {
+        xSemaphoreGive((xSemaphore));
+    }
+
+    /* Pin setting */
+    pinMode(INT_PIN, INPUT);
+
+    /* Task setting */
+    xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITIY_1, NULL, CORE_0);
+    xTaskCreateUniversal(TaskSample2, "TaskSample2", 1024, NULL, PRIORITIY_0, NULL, CORE_0);
+
+    /* Interrupt setting */
+    attachInterrupt(digitalPinToInterrupt(INT_PIN), Sample_ISR, FALLING);
+
+}
+
+void loop(){}
 
 ' >> $main_file
 
