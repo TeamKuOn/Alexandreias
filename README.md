@@ -30,10 +30,10 @@
 
 ```shell
 $ git branch
-    master
+    main
+    develop
     feature/NEO-6M_GPS
-  * feature/MS4525DO
-    feature/MCP2515_CAN
+  * feature/MCP2515_CAN
 ```
 
 ## 4. Setup Project
