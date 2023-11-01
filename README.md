@@ -41,19 +41,18 @@ $ git branch
 ```samples/``` ディレクトリ直下にプロジェクトを作成するためのシェルスクリプトを配置した．
 
 以下の例のようにコマンドを実行することで新規プロジェクトを作成できる．
-第1引数にはディレクトリ名を，第2引数にはボード名を入力する．
+第1引数にはディレクトリ名を，第2引数にはプロジェクト名を，第3引数にはボード名を入力する．
 　
 
 ```shell
 $ ls
-init_fm_arduino.sh
-$ source init_fm_arduino.sh MCP2515_CAN esp32dev
-The following files/directories have been created in /Users/wasou/workspace/kuon/Alexandreias/samples/MCP2515_CAN
-include - Put project header files here
-lib - Put project specific (private) libraries here
-src - Put project source files here
-platformio.ini - Project Configuration File
-Resolving esp32dev dependencies...
-Already up-to-date.
-Project has been successfully initialized!
+  init_fm_arduino.sh
+$ source init_fm_arduino.sh MCP2515_CAN RX esp32dev
+  The following files/directories have been created in /Users/wasou/Alexandreias/samples/MCP2515_CAN/RX
+  include - Put project header files here
+  lib - Put project specific (private) libraries here
+  src - Put project source files here
+  platformio.ini - Project Configuration File
+  Resolving esp32dev dependencies...
+  Project has been successfully initialized!
 ```

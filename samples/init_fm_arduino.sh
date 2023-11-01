@@ -4,8 +4,12 @@ dir_name="$1"
 mkdir $dir_name
 cd $dir_name
 
+prj_name="$2"
+mkdir $prj_name
+cd $prj_name
+
 ## Inirialized project
-board="$2"
+board="$3"
 baud=115200
 frameworks="framework=arduino"
 
