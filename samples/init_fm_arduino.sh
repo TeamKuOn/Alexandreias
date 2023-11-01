@@ -38,10 +38,6 @@ echo '/* Main library */
 
 /* Device library */
 
-/* Function declaration for Task Management */
-void TaskSample1(void *pvParameters);
-void TaskSample2(void *pvParameters);
-
 /* Task declaration */
 #define CORE_0 0
 #define CORE_1 1
