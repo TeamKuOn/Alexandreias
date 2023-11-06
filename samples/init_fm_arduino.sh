@@ -46,8 +46,8 @@ echo '/* Main library */
 #define CORE_0 0
 #define CORE_1 1
 
-#define PRIORITIY_1 1
-#define PRIORITIY_0 0
+#define PRIORITY_1 1
+#define PRIORITY_0 0
 
 /* Function declaration for Interrupt Management */
 void Sample_ISR();
@@ -106,8 +106,8 @@ void setup(){
     pinMode(INT_PIN, INPUT);
 
     /* Task setting */
-    xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITIY_1, NULL, CORE_0);
-    xTaskCreateUniversal(TaskSample2, "TaskSample2", 1024, NULL, PRIORITIY_0, NULL, CORE_0);
+    xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITY_1, NULL, CORE_0);
+    xTaskCreateUniversal(TaskSample2, "TaskSample2", 1024, NULL, PRIORITY_0, NULL, CORE_0);
 
     /* Interrupt setting */
     attachInterrupt(digitalPinToInterrupt(INT_PIN), Sample_ISR, FALLING);
