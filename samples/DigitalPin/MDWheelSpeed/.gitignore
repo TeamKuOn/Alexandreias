@@ -1,0 +1,10 @@
+.pio
+
+# PlatformIO
+.pio
+.pioenvs
+.piolibdeps
+
+# VSCode
+.vscode
+
