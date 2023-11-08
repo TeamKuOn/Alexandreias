@@ -52,27 +52,30 @@ echo '/* Main library */
 /* Function declaration for Interrupt Management */
 void Sample_ISR();
 
-/* Semaphore declaration */
-SemaphoreHandle_t xSemaphore;
+/* Semaphore & Mutex declaration */
+SemaphoreHandle_t xSemaphore1 = xSemaphoreCreateMutex();
+SemaphoreHandle_t xSemaphore2 = xSemaphoreCreateMutex();
+portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 
 /* Global variable */
 #define INT_PIN 2
 
 void Sample_ISR() {
-    if(xSemaphoreTakeFromISR(xSemaphore, NULL) == pdTRUE) {
-        // Write some code
+    portENTER_CRITICAL_ISR(&Mutex);
 
-        xSemaphoreGiveFromISR(xSemaphore, NULL);
+    // Write some code
+
+    portEXIT_CRITICAL_ISR(&Mutex);
     }
 }
 
 void TaskSample1(void *pvParameters){
 
     for(;;) {
-        if(xSemaphoreTake(xSemaphore, (TickType_t)1) == pdTRUE) {
+        if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
             Serial.println("1");
 
-            xSemaphoreGive(xSemaphore);
+            xSemaphoreGive(xSemaphore1);
         }
 
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -82,10 +85,10 @@ void TaskSample1(void *pvParameters){
 void TaskSample2(void *pvParameters){
 
     for(;;) {
-        if(xSemaphoreTake(xSemaphore, (TickType_t)1) == pdTRUE) {
+        if(xSemaphoreTake(xSemaphore2, (TickType_t)10) == pdTRUE) {
             Serial.println("2");
 
-            xSemaphoreGive(xSemaphore);
+            xSemaphoreGive(xSemaphore2);
         }
 
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -96,11 +99,6 @@ void TaskSample2(void *pvParameters){
 void setup(){
     /* Serial setting */
     Serial.begin(115200);
-
-    /* Semaphore setting */
-    if((xSemaphore = xSemaphoreCreateMutex()) != NULL) {
-        xSemaphoreGive((xSemaphore));
-    }
 
     /* Pin setting */
     pinMode(INT_PIN, INPUT);
