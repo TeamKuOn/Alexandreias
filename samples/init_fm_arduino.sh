@@ -35,7 +35,9 @@ echo '
 ## Create frame src file
 main_file="./src/main.cpp"
 touch $main_file
-echo '/* Main library */
+echo '#define ESP32_DEVKIT
+
+/* Main library */
 #include "Arduino.h"
 
 /* Communication library */
@@ -104,8 +106,10 @@ void setup(){
     pinMode(INT_PIN, INPUT);
 
     /* Task setting */
+#if defined(ESP32_DEVKIT)
     xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITY_1, NULL, CORE_0);
     xTaskCreateUniversal(TaskSample2, "TaskSample2", 1024, NULL, PRIORITY_0, NULL, CORE_0);
+#endif
 
     /* Interrupt setting */
     attachInterrupt(digitalPinToInterrupt(INT_PIN), Sample_ISR, FALLING);
