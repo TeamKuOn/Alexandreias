@@ -31,7 +31,7 @@ volatile unsigned long pulse_interval_micros = 0;    // current time [micro seco
 
 /* Global variable */
 #if defined(ESP32_DEVKIT)
-const int PULSE_INT_PIN = 18;
+#define PULSE_INT_PIN 18
 #endif
 
 double WHEEL_DIAMETER = 0.4;     // wheel diameter [m]
