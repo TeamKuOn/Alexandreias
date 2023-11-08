@@ -60,7 +60,7 @@ portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 /* Global variable */
 #define INT_PIN 2
 
-void Sample_ISR() {
+void IRAM_ATTR Sample_ISR() {
     portENTER_CRITICAL_ISR(&Mutex);
 
     // Write some code
