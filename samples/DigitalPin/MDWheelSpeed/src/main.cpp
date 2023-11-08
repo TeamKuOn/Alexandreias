@@ -65,7 +65,7 @@ void TaskPulseWatchdog(void *pvParameters){
 
         portEXIT_CRITICAL_ISR(&pulseMutex);
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 
@@ -84,7 +84,7 @@ void TaskSpeedCalc(void *pvParameters){
             xSemaphoreGive(accessSemaphore);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(40));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
@@ -97,7 +97,7 @@ void TaskPrint(void *pvParameters){
             xSemaphoreGive(accessSemaphore2);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(40));
     }
 }
 
