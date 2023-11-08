@@ -31,11 +31,11 @@ volatile unsigned long pulse_interval_micros = 0;    // current time [micro seco
 
 /* Global variable */
 #if defined(ESP32_DEVKIT)
-const int PULSE_INT_PIN = 18;
+#define PULSE_INT_PIN 18
 #endif
 
-double WHEEL_DIAMETER = 35.56;
-double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * PI;
+double WHEEL_DIAMETER = 0.4;     // wheel diameter [m]
+double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * PI;   // wheel circumference [m]
 double wheel_rotate_speed_mps = 0.0;
 double wheel_rotate_speed_kmph = 0.0;
 
@@ -65,7 +65,7 @@ void TaskPulseWatchdog(void *pvParameters){
 
         portEXIT_CRITICAL_ISR(&pulseMutex);
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 
@@ -77,14 +77,14 @@ void TaskSpeedCalc(void *pvParameters){
         psuedo_rotate_micros = pulse_interval_micros * PULSE_P_ROUNDS;
         portEXIT_CRITICAL_ISR(&pulseMutex);
 
-        wheel_rotate_speed_mps = WHEEL_CIRCUMFERENCE / (psuedo_rotate_micros / 10000.0);
+        wheel_rotate_speed_mps = WHEEL_CIRCUMFERENCE / (psuedo_rotate_micros / 1000000.0);
         if(xSemaphoreTake(accessSemaphore, (TickType_t)10 ) == pdTRUE) {
             wheel_rotate_speed_kmph = wheel_rotate_speed_mps * 3.6;
 
             xSemaphoreGive(accessSemaphore);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(40));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
@@ -97,7 +97,7 @@ void TaskPrint(void *pvParameters){
             xSemaphoreGive(accessSemaphore2);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(40));
     }
 }
 

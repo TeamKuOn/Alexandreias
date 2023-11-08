@@ -35,7 +35,9 @@ echo '
 ## Create frame src file
 main_file="./src/main.cpp"
 touch $main_file
-echo '/* Main library */
+echo '#define ESP32_DEVKIT
+
+/* Main library */
 #include "Arduino.h"
 
 /* Communication library */
@@ -52,27 +54,30 @@ echo '/* Main library */
 /* Function declaration for Interrupt Management */
 void Sample_ISR();
 
-/* Semaphore declaration */
-SemaphoreHandle_t xSemaphore;
+/* Semaphore & Mutex declaration */
+SemaphoreHandle_t xSemaphore1 = xSemaphoreCreateMutex();
+SemaphoreHandle_t xSemaphore2 = xSemaphoreCreateMutex();
+portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 
 /* Global variable */
 #define INT_PIN 2
 
-void Sample_ISR() {
-    if(xSemaphoreTakeFromISR(xSemaphore, NULL) == pdTRUE) {
-        // Write some code
+void IRAM_ATTR Sample_ISR() {
+    portENTER_CRITICAL_ISR(&Mutex);
 
-        xSemaphoreGiveFromISR(xSemaphore, NULL);
+    // Write some code
+
+    portEXIT_CRITICAL_ISR(&Mutex);
     }
 }
 
 void TaskSample1(void *pvParameters){
 
     for(;;) {
-        if(xSemaphoreTake(xSemaphore, (TickType_t)1) == pdTRUE) {
+        if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
             Serial.println("1");
 
-            xSemaphoreGive(xSemaphore);
+            xSemaphoreGive(xSemaphore1);
         }
 
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -82,10 +87,10 @@ void TaskSample1(void *pvParameters){
 void TaskSample2(void *pvParameters){
 
     for(;;) {
-        if(xSemaphoreTake(xSemaphore, (TickType_t)1) == pdTRUE) {
+        if(xSemaphoreTake(xSemaphore2, (TickType_t)10) == pdTRUE) {
             Serial.println("2");
 
-            xSemaphoreGive(xSemaphore);
+            xSemaphoreGive(xSemaphore2);
         }
 
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -97,17 +102,14 @@ void setup(){
     /* Serial setting */
     Serial.begin(115200);
 
-    /* Semaphore setting */
-    if((xSemaphore = xSemaphoreCreateMutex()) != NULL) {
-        xSemaphoreGive((xSemaphore));
-    }
-
     /* Pin setting */
     pinMode(INT_PIN, INPUT);
 
     /* Task setting */
+#if defined(ESP32_DEVKIT)
     xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITY_1, NULL, CORE_0);
     xTaskCreateUniversal(TaskSample2, "TaskSample2", 1024, NULL, PRIORITY_0, NULL, CORE_0);
+#endif
 
     /* Interrupt setting */
     attachInterrupt(digitalPinToInterrupt(INT_PIN), Sample_ISR, FALLING);
