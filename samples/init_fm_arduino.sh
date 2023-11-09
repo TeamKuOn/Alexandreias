@@ -51,9 +51,6 @@ echo '#define ESP32_DEVKIT
 #define PRIORITY_1 1
 #define PRIORITY_0 0
 
-/* Function declaration for Interrupt Management */
-void Sample_ISR();
-
 /* Semaphore & Mutex declaration */
 SemaphoreHandle_t xSemaphore1 = xSemaphoreCreateMutex();
 SemaphoreHandle_t xSemaphore2 = xSemaphoreCreateMutex();
@@ -62,13 +59,14 @@ portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 /* Global variable */
 #define INT_PIN 2
 
+
+
 void IRAM_ATTR Sample_ISR() {
     portENTER_CRITICAL_ISR(&Mutex);
 
     // Write some code
 
     portEXIT_CRITICAL_ISR(&Mutex);
-    }
 }
 
 void TaskSample1(void *pvParameters){
