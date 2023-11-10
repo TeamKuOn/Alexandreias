@@ -15,7 +15,16 @@
 /* Device library */
 #include <mcp_can.h>
 
-SemaphoreHandle_t xCanSemaphore;
+/* Task declaration */
+#define CORE_0 0
+#define CORE_1 1
+
+#define PRIORITY_1 1
+#define PRIORITY_0 0
+
+/* Semaphore & Mutex declaration */
+SemaphoreHandle_t xCanTxSemaphore = xSemaphoreCreateMutex();
+SemaphoreHandle_t xCanPrintSemaphore = xSemaphoreCreateMutex();
 
 // typedef unsigned char ___u64Byte;
 
@@ -48,15 +57,15 @@ byte canSendStatus2;
 void TaskCANSend(void *pvParameters) {
 
     for(;;) {
-        if(xSemaphoreTake(xCanSemaphore, (TickType_t)1) == pdTRUE) {
 
-            byte data1[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-            byte data2[6] = {0x00, 0x03, 0x02, 0x04, 0x05, 0x07};
+        byte data1[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        byte data2[6] = {0x00, 0x03, 0x02, 0x04, 0x05, 0x07};
 
+        if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
             canSendStatus1 = CAN0.sendMsgBuf(CAN_SEND_ID_1, 0, can_send_dlc_1, data1);
             canSendStatus2 = CAN0.sendMsgBuf(CAN_SEND_ID_2, 0, can_send_dlc_2, data2);
 
-            xSemaphoreGive(xCanSemaphore);
+            xSemaphoreGive(xCanTxSemaphore);
         }
 
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -66,23 +75,26 @@ void TaskCANSend(void *pvParameters) {
 void TaskDisplayCANSendRes(void *pvParameters) {
 
     for(;;) {
+        if(xSemaphoreTake(xCanPrintSemaphore, (TickType_t)1) == pdTRUE) {
 
-        if (canSendStatus1 == 0) {
-            Serial.println("Send Msg1 OK!");
-        } else if (canSendStatus1 == 6) {
-            Serial.println("Get TX buff time out... (CAN_GETTXBFTIMEOUT)");
-        } else if (canSendStatus1 == 7) {
-            Serial.println("Send Msg1 time out... (CAN_SENDMSGTIMEOUT)");
-        }
+            if (canSendStatus1 == 0) {
+                Serial.println("Send Msg1 OK!");
+            } else if (canSendStatus1 == 6) {
+                Serial.println("Get TX buff time out... (CAN_GETTXBFTIMEOUT)");
+            } else if (canSendStatus1 == 7) {
+                Serial.println("Send Msg1 time out... (CAN_SENDMSGTIMEOUT)");
+            }
+            
+            if (canSendStatus2 == 0) {
+                Serial.println("Send Msg2 OK!");
+            } else if (canSendStatus2 == 6) {
+                Serial.println("Get TX buff time out... (CAN_GETTXBFTIMEOUT)");
+            } else if (canSendStatus2 == 7) {
+                Serial.println("Send Msg2 time out... (CAN_SENDMSGTIMEOUT)");
+            }
         
-        if (canSendStatus2 == 0) {
-            Serial.println("Send Msg1 OK!");
-        } else if (canSendStatus2 == 6) {
-            Serial.println("Get TX buff time out... (CAN_GETTXBFTIMEOUT)");
-        } else if (canSendStatus2 == 7) {
-            Serial.println("Send Msg1 time out... (CAN_SENDMSGTIMEOUT)");
+            xSemaphoreGive(xCanPrintSemaphore);
         }
-        
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -95,25 +107,22 @@ void setup() {
     /* CAN Setting up */
     Serial.println("CAN Starting up");
 
-    if(CAN0.begin(MCP_ANY, CAN_125KBPS, MCP_8MHZ) == CAN_OK) Serial.println("MCP2515 Initialized Successfully!");
-    else Serial.println("Error Initializing MCP2515...");
+    while(CAN0.begin(MCP_ANY, CAN_125KBPS, MCP_8MHZ) != CAN_OK){
+        Serial.println("Error Initializing MCP2515...");
+    }
+    Serial.println("MCP2515 Initialized Successfully!");
 
     CAN0.setMode(MCP_NORMAL);
     pinMode(CAN0_INT, INPUT);
     Serial.println("CAN Setup complete");
 
-    /* Semaphore setting */
-    if((xCanSemaphore = xSemaphoreCreateMutex()) != NULL) {
-        xSemaphoreGive((xCanSemaphore));
-    }
-
     /* Task setting */
 #if defined(ESP32_DEVKIT)
-    xTaskCreateUniversal(TaskCANSend, "CANSend", 1024, NULL, 1, NULL, 1);
-    xTaskCreateUniversal(TaskDisplayCANSendRes, "DisplayCANSendRes", 1024, NULL, 0, NULL, 0);
+    xTaskCreateUniversal(TaskCANSend, "CANSend", 2048, NULL, PRIORITY_1, NULL, CORE_0);
+    xTaskCreateUniversal(TaskDisplayCANSendRes, "DisplayCANSendRes", 1024, NULL, PRIORITY_0, NULL, CORE_0);
 #elif defined(ATMEGA2560)
-    xTaskCreate(TaskCANSend, "CANSend", 1024, NULL, 1, NULL);
-    xTaskCreate(TaskDisplayCANSendRes, "DisplayCANSendRes", 1024, NULL, 0, NULL);
+    xTaskCreate(TaskCANSend, "CANSend", 1024, NULL, PRIORITY_1, NULL);
+    xTaskCreate(TaskDisplayCANSendRes, "DisplayCANSendRes", 1024, NULL, PRIORITY_0, NULL);
 #endif
 
 }
