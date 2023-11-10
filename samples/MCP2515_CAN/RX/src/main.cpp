@@ -15,7 +15,16 @@
 /* Device library */
 #include <mcp_can.h>
 
-SemaphoreHandle_t xCanSemaphore;
+/* Task declaration */
+#define CORE_0 0
+#define CORE_1 1
+
+#define PRIORITY_1 1
+#define PRIORITY_0 0
+
+/* Semaphore & Mutex declaration */
+SemaphoreHandle_t xCanSemaphore = xSemaphoreCreateMutex();
+portMUX_TYPE canRxMutex = portMUX_INITIALIZER_UNLOCKED;
 
 // typedef unsigned char ___u64Byte;
 
@@ -45,49 +54,41 @@ int receiveRes;
 byte canSendStatus1;
 byte canSendStatus2;
 
-void MCP2515_Read_ISR() {
-    if(xSemaphoreTakeFromISR(xCanSemaphore, NULL) == pdTRUE) {
-        CAN0.readMsgBuf(&rxId, &len, rxBuf);
+void IRAM_ATTR MCP2515_Read_ISR() {
+    portENTER_CRITICAL_ISR(&canRxMutex);
 
-        xSemaphoreGiveFromISR(xCanSemaphore, NULL);
-    }
-}
-void TaskCANReceive(void *pvParameters) {
+    CAN0.readMsgBuf(&rxId, &len, rxBuf);
 
-    for(;;) {
-        if(xSemaphoreTake(xCanSemaphore, (TickType_t)1) == pdTRUE) {
-            receiveRes = CAN0.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
-
-            xSemaphoreGive(xCanSemaphore);
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
+    portEXIT_CRITICAL_ISR(&canRxMutex);
 }
 
 void TaskDisplayCANReceiveRes(void *pvParameters) {
 
     for(;;) {
 
-        if((rxId & 0x80000000) == 0x80000000)     // Determine if ID is standard (11 bits) or extended (29 bits)
-            sprintf(msgString, "Extended ID: 0x%.8lX  DLC: %1d  Data:", (rxId & 0x1FFFFFFF), len);
-        else
-            sprintf(msgString, "Standard ID: 0x%.3lX       DLC: %1d  Data:", rxId, len);
-    
-        Serial.print(msgString);
+        if(xSemaphoreTake(xCanSemaphore, (TickType_t)1) == pdTRUE) {
 
-        if((rxId & 0x40000000) == 0x40000000){    
-            sprintf(msgString, " REMOTE REQUEST FRAME");
-            Serial.print(msgString);
-        } else {
-            for(byte i = 0; i<len; i++){
-                sprintf(msgString, " 0x%.2X", rxBuf[i]);
-                Serial.print(msgString);
-            }
-        }
+            if((rxId & 0x80000000) == 0x80000000)     // Determine if ID is standard (11 bits) or extended (29 bits)
+                sprintf(msgString, "Extended ID: 0x%.8lX  DLC: %1d  Data:", (rxId & 0x1FFFFFFF), len);
+            else
+                sprintf(msgString, "Standard ID: 0x%.3lX       DLC: %1d  Data:", rxId, len);
         
-        Serial.println();
+            Serial.print(msgString);
 
+            if((rxId & 0x40000000) == 0x40000000){    
+                sprintf(msgString, " REMOTE REQUEST FRAME");
+                Serial.print(msgString);
+            } else {
+                for(byte i = 0; i<len; i++){
+                    sprintf(msgString, " 0x%.2X", rxBuf[i]);
+                    Serial.print(msgString);
+                }
+            }
+            
+            Serial.println();
+
+            xSemaphoreGive(xCanSemaphore);
+        }
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
@@ -99,25 +100,20 @@ void setup() {
     /* CAN Setting up */
     Serial.println("CAN Starting up");
 
-    if(CAN0.begin(MCP_ANY, CAN_125KBPS, MCP_8MHZ) == CAN_OK) Serial.println("MCP2515 Initialized Successfully!");
-    else Serial.println("Error Initializing MCP2515...");
+    while(CAN0.begin(MCP_ANY, CAN_125KBPS, MCP_8MHZ) != CAN_OK){
+        Serial.println("Error Initializing MCP2515...");
+    }
+    Serial.println("MCP2515 Initialized Successfully!");
 
     CAN0.setMode(MCP_NORMAL);
     pinMode(CAN0_INT, INPUT);
     Serial.println("CAN Setup complete");
 
-    /* Semaphore setting */
-    if((xCanSemaphore = xSemaphoreCreateMutex()) != NULL) {
-        xSemaphoreGive((xCanSemaphore));
-    }
-
     /* Task setting */
 #if defined(ESP32_DEVKIT)
-    xTaskCreateUniversal(TaskCANReceive, "CANReceive", 1024, NULL, 1, NULL, 1);
-    xTaskCreateUniversal(TaskDisplayCANReceiveRes, "DisplayCANReceiveRes", 1024, NULL, 0, NULL, 0);
+    xTaskCreateUniversal(TaskDisplayCANReceiveRes, "DisplayCANReceiveRes", 1024, NULL, PRIORITY_0, NULL, CORE_0);
 #elif defined(ATMEGA2560)
-    xTaskCreate(TaskCANReceive, "CANReceive", 1024, NULL, 1, NULL);
-    xTaskCreate(TaskDisplayCANReceiveRes, "DisplayCANReceiveRes", 1024, NULL, 0, NULL);
+    xTaskCreate(TaskDisplayCANReceiveRes, "DisplayCANReceiveRes", 1024, NULL, PRIORITY_0, NULL);
 #endif
 
     /* Interrupt setting */
