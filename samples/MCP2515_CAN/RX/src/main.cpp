@@ -37,27 +37,23 @@ portMUX_TYPE canRxMutex = portMUX_INITIALIZER_UNLOCKED;
 #define CAN0_INT 2
 #endif
 
-#define CAN_SEND_ID_1 0x0F6
-#define CAN_SEND_ID_2 0x0F7
-
 MCP_CAN CAN0(CHIP_SELECT);
 
-int can_send_dlc_1 = 8;
-int can_send_dlc_2 = 6;
+struct can_frame {
+    unsigned long can_id;
+    byte can_dlc;
+    byte data[8];
+};
 
-long unsigned int rxId;
-unsigned char len = 0;
-unsigned char rxBuf[8];
+struct can_frame canMsg;
+
 char msgString[128];
 
-int receiveRes;
-byte canSendStatus1;
-byte canSendStatus2;
 
 void IRAM_ATTR MCP2515_Read_ISR() {
     portENTER_CRITICAL_ISR(&canRxMutex);
 
-    CAN0.readMsgBuf(&rxId, &len, rxBuf);
+    CAN0.readMsgBuf(&canMsg.can_id, &canMsg.can_dlc, canMsg.data);
 
     portEXIT_CRITICAL_ISR(&canRxMutex);
 }
@@ -66,21 +62,21 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
 
     for(;;) {
 
-        if(xSemaphoreTake(xCanSemaphore, (TickType_t)1) == pdTRUE) {
+        if(xSemaphoreTake(xCanSemaphore, (TickType_t)10) == pdTRUE) {
 
-            if((rxId & 0x80000000) == 0x80000000)     // Determine if ID is standard (11 bits) or extended (29 bits)
-                sprintf(msgString, "Extended ID: 0x%.8lX  DLC: %1d  Data:", (rxId & 0x1FFFFFFF), len);
+            if((canMsg.can_id & 0x80000000) == 0x80000000)     // Determine if ID is standard (11 bits) or extended (29 bits)
+                sprintf(msgString, "Extended ID: 0x%.8lX  DLC: %1d  Data:", (canMsg.can_id & 0x1FFFFFFF), canMsg.can_dlc);
             else
-                sprintf(msgString, "Standard ID: 0x%.3lX       DLC: %1d  Data:", rxId, len);
+                sprintf(msgString, "Standard ID: 0x%.3lX       DLC: %1d  Data:", canMsg.can_id, canMsg.can_dlc);
         
             Serial.print(msgString);
 
-            if((rxId & 0x40000000) == 0x40000000){    
+            if((canMsg.can_id & 0x40000000) == 0x40000000){    
                 sprintf(msgString, " REMOTE REQUEST FRAME");
                 Serial.print(msgString);
             } else {
-                for(byte i = 0; i<len; i++){
-                    sprintf(msgString, " 0x%.2X", rxBuf[i]);
+                for(byte i = 0; i<canMsg.can_dlc; i++){
+                    sprintf(msgString, " 0x%.2X", canMsg.data[i]);
                     Serial.print(msgString);
                 }
             }
