@@ -37,20 +37,23 @@ SemaphoreHandle_t xCanPrintSemaphore = xSemaphoreCreateMutex();
 #define CAN0_INT 2
 #endif
 
+MCP_CAN CAN0(CHIP_SELECT);
+
+#define STD_FRAME 0
+#define EXT_FRAME 0
+
+struct can_frame {
+    unsigned long can_id;
+    byte can_dlc;
+    byte data[8];
+};
+
+struct can_frame canMsg1;
+struct can_frame canMsg2;
+
 #define CAN_SEND_ID_1 0x0F6
 #define CAN_SEND_ID_2 0x0F7
 
-MCP_CAN CAN0(CHIP_SELECT);
-
-int can_send_dlc_1 = 8;
-int can_send_dlc_2 = 6;
-
-long unsigned int rxId;
-unsigned char len = 0;
-unsigned char rxBuf[8];
-char msgString[128];
-
-int receiveRes;
 byte canSendStatus1;
 byte canSendStatus2;
 
@@ -58,12 +61,18 @@ void TaskCANSend(void *pvParameters) {
 
     for(;;) {
 
-        byte data1[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-        byte data2[6] = {0x00, 0x03, 0x02, 0x04, 0x05, 0x07};
+        canMsg1.can_id = CAN_SEND_ID_1;
+        canMsg1.can_dlc = 8;
+        canMsg1.data[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        
+        canMsg2.can_id = CAN_SEND_ID_2;
+        canMsg2.can_dlc = 4;
+        canMsg2.data[4] = {0x00, 0x01, 0x02, 0x03};
+
 
         if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
-            canSendStatus1 = CAN0.sendMsgBuf(CAN_SEND_ID_1, 0, can_send_dlc_1, data1);
-            canSendStatus2 = CAN0.sendMsgBuf(CAN_SEND_ID_2, 0, can_send_dlc_2, data2);
+            canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
+            canSendStatus2 = CAN0.sendMsgBuf(canMsg2.can_id, STD_FRAME, canMsg2.can_dlc, canMsg2.data);
 
             xSemaphoreGive(xCanTxSemaphore);
         }
