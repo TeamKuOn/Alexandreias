@@ -21,8 +21,10 @@ echo 'upload_speed = 115200
 monitor_speed = 115200
 ' >> "./platformio.ini"
 
-## add ignore dir
-echo '
+## Add ignoring dir
+IGNORE_FILE="./.gitignore"
+if [ ! -s $IGNORE_FILE ]; then
+    echo '
 # PlatformIO
 .pio
 .pioenvs
@@ -30,12 +32,16 @@ echo '
 
 # VSCode
 .vscode
-' >> "./.gitignore"
+' >> $IGNORE_FILE
+else
+    echo "File $IGNORE_FILE already exists."
+fi
 
 ## Create frame src file
-main_file="./src/main.cpp"
-touch $main_file
-echo '#define ESP32_DEVKIT
+MAIN_FILE="./src/main.cpp"
+touch $MAIN_FILE
+if [ ! -s $MAIN_FILE ]; then
+    echo '#define ESP32_DEVKIT
 
 /* Main library */
 #include "Arduino.h"
@@ -116,6 +122,10 @@ void setup(){
 
 void loop(){}
 
-' >> $main_file
+' >> $MAIN_FILE
+    echo "File $MAIN_FILE created."
+else
+    echo "File $MAIN_FILE already exists."
+fi
 
 cd $current_dir
