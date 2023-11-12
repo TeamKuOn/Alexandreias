@@ -41,34 +41,47 @@ MCP_CAN CAN0(CHIP_SELECT);
 
 #define STD_FRAME 0
 #define EXT_FRAME 0
+#define MAX_DATA_LEN 8
 
 struct can_frame {
     unsigned long can_id;
     byte can_dlc;
-    byte data[8];
+    byte data[MAX_DATA_LEN];
 };
 
 struct can_frame canMsg1;
 struct can_frame canMsg2;
 
-#define CAN_SEND_ID_1 0x0F6
-#define CAN_SEND_ID_2 0x0F7
+#define CAN_SEND_ID_1 0x0F6     // 0x0F6 = 246
+#define CAN_SEND_ID_2 0x0F7     // 0x0F7 = 247
 
 byte canSendStatus1;
 byte canSendStatus2;
+
+
+
+void float2byte(float f, byte *byteArr) {
+    byte* bytes = (byte*) &f;
+    for(int i = 0; i < sizeof(float); i++) {
+        byteArr[i] = bytes[i];
+        if(i > MAX_DATA_LEN) {
+            break;
+        }
+    }
+}
+
+void makeFloatCanMsg(struct can_frame *canMsg, unsigned long can_id, float f) {
+    canMsg->can_id = can_id;
+    float2byte(f, canMsg->data);
+    canMsg->can_dlc = sizeof(canMsg->data);
+}
 
 void TaskCANSend(void *pvParameters) {
 
     for(;;) {
 
-        canMsg1.can_id = CAN_SEND_ID_1;
-        canMsg1.can_dlc = 8;
-        canMsg1.data[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-        
-        canMsg2.can_id = CAN_SEND_ID_2;
-        canMsg2.can_dlc = 4;
-        canMsg2.data[4] = {0x00, 0x01, 0x02, 0x03};
-
+        makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, 33.6673188);
+        makeFloatCanMsg(&canMsg2, CAN_SEND_ID_2, 135.3545314);
 
         if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
             canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
