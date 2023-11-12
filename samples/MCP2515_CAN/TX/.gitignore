@@ -7,13 +7,3 @@
 
 # VSCode
 .vscode
-
-
-# PlatformIO
-.pio
-.pioenvs
-.piolibdeps
-
-# VSCode
-.vscode
-
