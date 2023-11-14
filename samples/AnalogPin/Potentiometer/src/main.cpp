@@ -56,7 +56,7 @@ void setup() {
     /* Pin setting */
     pinMode(ANALOG_PIN, ANALOG);
 #if defined(ESP32_DEVKIT)
-    analogSetPinAttenuation(ANALOG_PIN, ADC_6db);
+    analogSetPinAttenuation(ANALOG_PIN, ADC_11db);
 #endif
 
     /* Task setting */
