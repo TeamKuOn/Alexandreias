@@ -17,10 +17,10 @@
 SemaphoreHandle_t xAnalogpinSemaphore;
 
 #if defined(ESP32_DEVKIT)
-#define ANALOG_PIN 34
+#define POTENTIOMETER_PIN 34
 #define ANALOG_MAX 4096
 #elif defined(ATMEGA2560)
-#define ANALOG_PIN A0
+#define POTENTIOMETER_PIN A0
 #endif
 
 void TaskAnalogRead(void *pvParameters) {
@@ -30,8 +30,8 @@ void TaskAnalogRead(void *pvParameters) {
 
     for (;;) {
         if (xSemaphoreTake(xAnalogpinSemaphore, (TickType_t)10) == pdTRUE) {
-            analog_val = analogRead(ANALOG_PIN);
-            mV_val = analogReadMilliVolts(ANALOG_PIN);
+            analog_val = analogRead(POTENTIOMETER_PIN);
+            mV_val = analogReadMilliVolts(POTENTIOMETER_PIN);
 
             Serial.println(analog_val);
             Serial.print(mV_val); Serial.println("[mV]");
@@ -54,9 +54,9 @@ void setup() {
     }
 
     /* Pin setting */
-    pinMode(ANALOG_PIN, ANALOG);
+    pinMode(POTENTIOMETER_PIN, ANALOG);
 #if defined(ESP32_DEVKIT)
-    analogSetPinAttenuation(ANALOG_PIN, ADC_11db);
+    analogSetPinAttenuation(POTENTIOMETER_PIN, ADC_11db);
 #endif
 
     /* Task setting */

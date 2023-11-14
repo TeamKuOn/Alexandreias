@@ -20,7 +20,7 @@ SemaphoreHandle_t xSemaphore2 = xSemaphoreCreateMutex();
 
 /* Voltage Transmitter setting */
 #if defined(ESP32_DEVKIT)
-#define ANALOG_PIN 34
+#define V_TRANS_PIN 34
 #define ANALOG_MAX 4096
 #endif
 #define MAX_VOLT 3.3    // 0 to 3.3 [volt]
@@ -33,7 +33,7 @@ double estimate_volt = 0.0;
 void TaskSample1(void *pvParameters){
 
     for(;;) {
-        origin_volt = analogRead(ANALOG_PIN);
+        origin_volt = analogRead(V_TRANS_PIN);
         if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
             estimate_volt = map(origin_volt, 0, ANALOG_MAX, 0, TRNS_INPUT_UPPER);
 
@@ -63,9 +63,9 @@ void setup(){
     Serial.begin(115200);
 
     /* Pin setting */
-    pinMode(ANALOG_PIN, ANALOG);
+    pinMode(V_TRANS_PIN, ANALOG);
 #if defined(ESP32_DEVKIT)
-    analogSetPinAttenuation(ANALOG_PIN, ADC_11db);
+    analogSetPinAttenuation(V_TRANS_PIN, ADC_11db);
 #endif
 
     /* Task setting */
