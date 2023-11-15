@@ -91,9 +91,12 @@ void create_request_header(){
 void send_request(){
     create_request_header();
     if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
-        sprintf(request.header, "%s\r\n%s\r\n%s\r\n%s\r\n", header.start_line, header.host, header.content_type, header.content_length);
+        serializeJson(content, request.body);
+
         xSemaphoreGive(xSemaphore1);
     }
+
+    sprintf(request.header, "%s\r\n%s\r\n%s\r\n%s\r\n", header.start_line, header.host, header.content_type, header.content_length);
 
     ctx.println(request.header);
     ctx.println(request.body);
@@ -106,7 +109,7 @@ void TaskSample1(void *pvParameters){
         connect_endpoint();
         send_request();
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
@@ -116,7 +119,6 @@ void TaskSample2(void *pvParameters){
         uptime_sec = millis() / 1000;
         if(xSemaphoreTake(xSemaphore2, (TickType_t)10) == pdTRUE) {
             content["uptime"] = uptime_sec;
-            serializeJson(content, request.body);
 
             xSemaphoreGive(xSemaphore2);
         }
@@ -135,12 +137,12 @@ void setup(){
 #endif
 
     /* LTE-M shield setting */
-        hardware_reset_BG96();
+    hardware_reset_BG96();
     
     /* Task setting */
 #if defined(ESP32_DEVKIT)
-    xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITY_1, NULL, CORE_0);
-    xTaskCreateUniversal(TaskSample2, "TaskSample2", 1024, NULL, PRIORITY_0, NULL, CORE_0);
+    xTaskCreateUniversal(TaskSample1, "TaskSample1", 10240, NULL, PRIORITY_1, NULL, CORE_0);
+    xTaskCreateUniversal(TaskSample2, "TaskSample2", 4096, NULL, PRIORITY_0, NULL, CORE_0);
 #endif
 
 }
