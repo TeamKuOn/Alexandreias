@@ -44,6 +44,9 @@ TinyGsm modem(LTE_M_shield);
 TinyGsmClient ctx(modem);
 
 #define END_POINT "uni.soracom.io"
+#define SORACOM_APN "soracom.io"
+#define SORACOM_USER "sora"
+#define SORACOM_PASS "sora"
 
 /* Json setting */
 #include <ArduinoJson.h>
@@ -74,7 +77,7 @@ void hardware_reset_BG96(){
     digitalWrite(BG96_RST, LOW);
 
     modem.restart();
-    modem.gprsConnect("soracom.io", "sora", "sora");
+    modem.gprsConnect(SORACOM_APN, SORACOM_USER, SORACOM_PASS);
 }
 
 void connect_endpoint(){
