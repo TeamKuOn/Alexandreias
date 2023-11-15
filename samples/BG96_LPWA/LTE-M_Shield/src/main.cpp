@@ -50,7 +50,8 @@ TinyGsmClient ctx(modem);
 
 /* Json setting */
 #include <ArduinoJson.h>
-StaticJsonDocument<200> content;
+#define JSON_BUFF_SIZE 200
+StaticJsonDocument<JSON_BUFF_SIZE> content;
 unsigned long uptime_sec = 0;
 
 struct EntityHeader {
@@ -62,7 +63,7 @@ struct EntityHeader {
 
 struct Request {
     char header[300];
-    char body[120] = "";
+    char body[JSON_BUFF_SIZE] = "";
 };
 
 struct EntityHeader header;
