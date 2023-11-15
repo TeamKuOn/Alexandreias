@@ -33,8 +33,8 @@ double estimate_volt = 0.0;
 void TaskSample1(void *pvParameters){
 
     for(;;) {
-        origin_volt = analogRead(V_TRANS_PIN);
         if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
+            origin_volt = analogRead(V_TRANS_PIN);
             estimate_volt = map(origin_volt, 0, ANALOG_MAX, 0, TRNS_INPUT_UPPER);
 
             xSemaphoreGive(xSemaphore1);
@@ -47,6 +47,14 @@ void TaskSample1(void *pvParameters){
 void TaskSample2(void *pvParameters){
 
     for(;;) {
+        Serial.print("Origin voltage: ");
+        if(xSemaphoreTake(xSemaphore2, (TickType_t)10) == pdTRUE) {
+            Serial.println(origin_volt);
+
+            xSemaphoreGive(xSemaphore2);
+        }
+
+        Serial.print("Estimate voltage: ");
         if(xSemaphoreTake(xSemaphore2, (TickType_t)10) == pdTRUE) {
             Serial.println(estimate_volt);
 
