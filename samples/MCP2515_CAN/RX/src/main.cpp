@@ -1,6 +1,9 @@
 #define ESP32_DEVKIT
 // #define ATMEGA2560
 
+#define RX_RAW_DATA
+// #define RX_DECODED_DATA
+
 /* Main library */
 #include "Arduino.h"
 
@@ -62,6 +65,7 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
 
     for(;;) {
 
+#if defined(RX_RAW_DATA)
         if(xSemaphoreTake(xCanSemaphore, (TickType_t)10) == pdTRUE) {
 
             if((canMsg.can_id & 0x80000000) == 0x80000000)     // Determine if ID is standard (11 bits) or extended (29 bits)
@@ -82,14 +86,16 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
             } else {
                 for(byte i = 0; i<canMsg.can_dlc; i++){
                     sprintf(msgString, " 0x%.2X", canMsg.data[i]);
-                    Serial.print(msgString);
-                }
+                Serial.print(msgString);
+}
             }
             
             xSemaphoreGive(xCanSemaphore);
         }
 
         Serial.println();
+#elif defined(RX_DECODED_DATA)
+#endif
 
         vTaskDelay(pdMS_TO_TICKS(50));
     }
