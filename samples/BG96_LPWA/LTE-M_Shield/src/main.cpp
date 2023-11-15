@@ -92,7 +92,6 @@ void create_request_header(){
 }
 
 void send_request(unsigned long *id){
-    create_request_header();
     if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
         content["id"] = *id;
         serializeJson(content, request.body);
@@ -100,6 +99,7 @@ void send_request(unsigned long *id){
         xSemaphoreGive(xSemaphore1);
     }
 
+    create_request_header();
     sprintf(request.header, "%s\r\n%s\r\n%s\r\n%s\r\n", header.start_line, header.host, header.content_type, header.content_length);
 
     ctx.println(request.header);
