@@ -164,8 +164,8 @@ void setup(){
     
     /* Task setting */
 #if defined(ESP32_DEVKIT)
-    xTaskCreateUniversal(TaskSample1, "TaskSample1", 5120, NULL, PRIORITY_1, NULL, CORE_0);
-    xTaskCreateUniversal(TaskSample2, "TaskSample2", 4096, NULL, PRIORITY_0, NULL, CORE_0);
+    xTaskCreateUniversal(TaskSample1, "TaskSample1", 5120, NULL, PRIORITY_0, NULL, CORE_0);
+    xTaskCreateUniversal(TaskSample2, "TaskSample2", 4096, NULL, PRIORITY_1, NULL, CORE_0);
 #endif
 
 }
