@@ -88,9 +88,10 @@ void create_request_header(){
     sprintf_P(header.content_length, PSTR("Content-Length: %d"), strlen(request.body));
 }
 
-void send_request(){
+void send_request(unsigned long *id){
     create_request_header();
     if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
+        content["id"] = *id;
         serializeJson(content, request.body);
 
         xSemaphoreGive(xSemaphore1);
@@ -100,14 +101,17 @@ void send_request(){
 
     ctx.println(request.header);
     ctx.println(request.body);
+
+    *id += 1;
 }
 
 
 void TaskSample1(void *pvParameters){
+    unsigned long id = 0;
 
     for(;;) {
         connect_endpoint();
-        send_request();
+        send_request(&id);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
