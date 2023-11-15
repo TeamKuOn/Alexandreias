@@ -3,6 +3,7 @@
 
 /* Main library */
 #include "Arduino.h"
+#include "esp_task_wdt.h"
 
 /* Communication library */
 #include <SoftwareSerial.h>
@@ -10,6 +11,9 @@
 /* Device library */
 #define TINY_GSM_MODEM_BG96
 #include <TinyGsmClient.h>
+
+/* Task Watchdog Timer setting */
+#define TASK_WDT_TIMEOUT_S 60
 
 /* Task declaration */
 #define CORE_0 0
@@ -48,6 +52,7 @@ TinyGsmClient ctx(modem);
 #define SORACOM_USER "sora"
 #define SORACOM_PASS "sora"
 #define SORACOM_PORT 80
+#define SORACOM_CONNECTION_TIMEOUT 50
 
 /* Json setting */
 #include <ArduinoJson.h>
@@ -83,7 +88,7 @@ void hardware_reset_BG96(){
 }
 
 void connect_endpoint(){
-    if(!ctx.connect(END_POINT, SORACOM_PORT)) {
+    if(!ctx.connect(END_POINT, SORACOM_PORT, SORACOM_CONNECTION_TIMEOUT)) {
         return;
     }
 }
@@ -118,6 +123,8 @@ void TaskSample1(void *pvParameters){
         connect_endpoint();
         send_request(&id);
 
+        esp_task_wdt_reset();
+
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -132,11 +139,18 @@ void TaskSample2(void *pvParameters){
             xSemaphoreGive(xSemaphore2);
         }
 
+        esp_task_wdt_reset();
+
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 void setup(){
+    /* Task Watchdog Timer setting */
+    esp_task_wdt_init(TASK_WDT_TIMEOUT_S, true);
+    esp_task_wdt_add(NULL);
+
+
     /* Serial setting */
     Serial.begin(115200);
 #if defined(ESP32_DEVKIT)
@@ -156,6 +170,8 @@ void setup(){
 
 }
 
-void loop(){}
+void loop(){
+    esp_task_wdt_reset();
+}
 
 
