@@ -47,6 +47,7 @@ TinyGsmClient ctx(modem);
 #define SORACOM_APN "soracom.io"
 #define SORACOM_USER "sora"
 #define SORACOM_PASS "sora"
+#define SORACOM_PORT 80
 
 /* Json setting */
 #include <ArduinoJson.h>
@@ -82,7 +83,7 @@ void hardware_reset_BG96(){
 }
 
 void connect_endpoint(){
-    if(!ctx.connect(END_POINT, 80)) {
+    if(!ctx.connect(END_POINT, SORACOM_PORT)) {
         return;
     }
 }
