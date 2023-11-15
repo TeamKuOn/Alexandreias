@@ -91,7 +91,7 @@ void create_request_header(){
 void send_request(){
     create_request_header();
     if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
-        sprintf(request.header, "%s\r\n%s\r\n%s\r\n%s\r\n\r\n", header.start_line, header.host, header.content_type, header.content_length);
+        sprintf(request.header, "%s\r\n%s\r\n%s\r\n%s\r\n", header.start_line, header.host, header.content_type, header.content_length);
         xSemaphoreGive(xSemaphore1);
     }
 
