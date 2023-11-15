@@ -78,13 +78,8 @@ void hardware_reset_BG96(){
 }
 
 void connect_endpoint(){
-    unsigned int timeout = 240;
-    unsigned long start = millis();
-    while(!ctx.connect(END_POINT, 80)) {
-        delay(10);
-        if(millis() - start > timeout) {
-            return;
-        }
+    if(!ctx.connect(END_POINT, 80)) {
+        return;
     }
 }
 
@@ -104,24 +99,12 @@ void send_request(){
     ctx.println(request.body);
 }
 
-void recieve_response(){
-    String line = ctx.readStringUntil('\n');
-    while(ctx.connected()) {
-        if(line == "\r") {
-            Serial.println("headers received");
-            break;
-        }
-    }
-
-    ctx.stop();
-}
 
 void TaskSample1(void *pvParameters){
 
     for(;;) {
         connect_endpoint();
         send_request();
-        recieve_response();
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -152,8 +135,8 @@ void setup(){
 #endif
 
     /* LTE-M shield setting */
-    hardware_reset_BG96();
-
+        hardware_reset_BG96();
+    
     /* Task setting */
 #if defined(ESP32_DEVKIT)
     xTaskCreateUniversal(TaskSample1, "TaskSample1", 1024, NULL, PRIORITY_1, NULL, CORE_0);
