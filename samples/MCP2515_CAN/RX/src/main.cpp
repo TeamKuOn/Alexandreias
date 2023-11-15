@@ -68,8 +68,13 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
                 sprintf(msgString, "Extended ID: 0x%.8lX  DLC: %1d  Data:", (canMsg.can_id & 0x1FFFFFFF), canMsg.can_dlc);
             else
                 sprintf(msgString, "Standard ID: 0x%.3lX       DLC: %1d  Data:", canMsg.can_id, canMsg.can_dlc);
+
+            xSemaphoreGive(xCanSemaphore);
+        }
         
-            Serial.print(msgString);
+        Serial.print(msgString);
+
+        if(xSemaphoreTake(xCanSemaphore, (TickType_t)10) == pdTRUE) {
 
             if((canMsg.can_id & 0x40000000) == 0x40000000){    
                 sprintf(msgString, " REMOTE REQUEST FRAME");
@@ -81,10 +86,11 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
                 }
             }
             
-            Serial.println();
-
             xSemaphoreGive(xCanSemaphore);
         }
+
+        Serial.println();
+
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
