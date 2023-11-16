@@ -49,12 +49,15 @@ struct can_frame {
     byte data[MAX_DATA_LEN];
 };
 
+struct can_frame canMsg0;
 struct can_frame canMsg1;
 struct can_frame canMsg2;
 
+#define CAN_SEND_ID_0 0x0F5     // 0x0F5 = 245
 #define CAN_SEND_ID_1 0x0F6     // 0x0F6 = 246
 #define CAN_SEND_ID_2 0x0F7     // 0x0F7 = 247
 
+byte canSendStatus0;
 byte canSendStatus1;
 byte canSendStatus2;
 
@@ -93,16 +96,35 @@ void makeFloatCanMsg(struct can_frame *canMsg, unsigned long can_id, float f) {
     canMsg->can_dlc = sizeof(canMsg->data);
 }
 
+void encode_int2byte(int i, byte *byteArr) {
+    byte* bytes = (byte*) &i;
+    for(int i = 0; i < sizeof(int); i++) {
+        byteArr[i] = bytes[i];
+        if(i > MAX_DATA_LEN) {
+            break;
+        }
+    }
+}
+
+void makeIntCanMsg(struct can_frame *canMsg, unsigned long can_id, int i) {
+    canMsg->can_id = can_id;
+    encode_int2byte(i, canMsg->data);
+    canMsg->can_dlc = sizeof(canMsg->data);
+}
+
 void TaskCANSend(void *pvParameters) {
+    int val_0 = 123;
     float val_1 = 33.6673188;
     double val_2 = 135.3545314;
 
     for(;;) {
 
+        makeIntCanMsg(&canMsg0, CAN_SEND_ID_0, val_0);
         makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, val_1);
         makeDoubleCanMsg(&canMsg2, CAN_SEND_ID_2, val_2);
 
         if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
+            canSendStatus0 = CAN0.sendMsgBuf(canMsg0.can_id, STD_FRAME, canMsg0.can_dlc, canMsg0.data);
             canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
             canSendStatus2 = CAN0.sendMsgBuf(canMsg2.can_id, STD_FRAME, canMsg2.can_dlc, canMsg2.data);
 
@@ -117,6 +139,13 @@ void TaskDisplayCANSendRes(void *pvParameters) {
 
     for(;;) {
         if(xSemaphoreTake(xCanPrintSemaphore, (TickType_t)1) == pdTRUE) {
+            if(canSendStatus0 == 0) {
+                Serial.println("Send Msg0 OK!");
+            } else if (canSendStatus0 == 6) {
+                Serial.println("Get TX buff time out... (CAN_GETTXBFTIMEOUT)");
+            } else if (canSendStatus0 == 7) {
+                Serial.println("Send Msg0 time out... (CAN_SENDMSGTIMEOUT)");
+            }
 
             if (canSendStatus1 == 0) {
                 Serial.println("Send Msg1 OK!");
