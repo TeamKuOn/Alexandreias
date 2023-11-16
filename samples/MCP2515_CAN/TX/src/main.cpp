@@ -60,6 +60,23 @@ byte canSendStatus2;
 
 
 
+void encode_double2byte(double f, byte *byteArr) {
+    byte* bytes = (byte*) &f;
+    for(int i = 0; i < sizeof(double); i++) {
+        byteArr[i] = bytes[i];
+        if(i > MAX_DATA_LEN) {
+            break;
+        }
+    }
+}
+
+void makeDoubleCanMsg(struct can_frame *canMsg, unsigned long can_id, double f) {
+    canMsg->can_id = can_id;
+    encode_double2byte(f, canMsg->data);
+    canMsg->can_dlc = sizeof(canMsg->data);
+}
+
+
 void encode_float2byte(float f, byte *byteArr) {
     byte* bytes = (byte*) &f;
     for(int i = 0; i < sizeof(float); i++) {
@@ -77,13 +94,13 @@ void makeFloatCanMsg(struct can_frame *canMsg, unsigned long can_id, float f) {
 }
 
 void TaskCANSend(void *pvParameters) {
-    double val_1 = 33.6673188;
+    float val_1 = 33.6673188;
     double val_2 = 135.3545314;
 
     for(;;) {
 
         makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, val_1);
-        makeFloatCanMsg(&canMsg2, CAN_SEND_ID_2, val_2);
+        makeDoubleCanMsg(&canMsg2, CAN_SEND_ID_2, val_2);
 
         if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
             canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
