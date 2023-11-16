@@ -52,16 +52,34 @@ struct can_frame {
 struct can_frame canMsg0;
 struct can_frame canMsg1;
 struct can_frame canMsg2;
+struct can_frame canMsg3;
 
 #define CAN_SEND_ID_0 0x0F5     // 0x0F5 = 245
 #define CAN_SEND_ID_1 0x0F6     // 0x0F6 = 246
 #define CAN_SEND_ID_2 0x0F7     // 0x0F7 = 247
+#define CAN_SEND_ID_3 0x0F8     // 0x0F8 = 248
 
 byte canSendStatus0;
 byte canSendStatus1;
 byte canSendStatus2;
+byte canSendStatus3;
 
 
+void encode_uint2byte(unsigned int i, byte *byteArr) {
+    byte* bytes = (byte*) &i;
+    for(int i = 0; i < sizeof(unsigned int); i++) {
+        byteArr[i] = bytes[i];
+        if(i > MAX_DATA_LEN) {
+            break;
+        }
+    }
+}
+
+void makeUIntCanMsg(struct can_frame *canMsg, unsigned long can_id, unsigned int i) {
+    canMsg->can_id = can_id;
+    encode_uint2byte(i, canMsg->data);
+    canMsg->can_dlc = sizeof(canMsg->data);
+}
 
 void encode_double2byte(double d, byte *byteArr) {
     byte* bytes = (byte*) &d;
@@ -116,17 +134,20 @@ void TaskCANSend(void *pvParameters) {
     int val_0 = 123;
     float val_1 = 33.6673188;
     double val_2 = 135.3545314;
+    unsigned int val_3 = 123;
 
     for(;;) {
 
         makeIntCanMsg(&canMsg0, CAN_SEND_ID_0, val_0);
         makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, val_1);
         makeDoubleCanMsg(&canMsg2, CAN_SEND_ID_2, val_2);
+        makeUIntCanMsg(&canMsg3, CAN_SEND_ID_3, val_3);
 
         if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
             canSendStatus0 = CAN0.sendMsgBuf(canMsg0.can_id, STD_FRAME, canMsg0.can_dlc, canMsg0.data);
             canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
             canSendStatus2 = CAN0.sendMsgBuf(canMsg2.can_id, STD_FRAME, canMsg2.can_dlc, canMsg2.data);
+            canSendStatus3 = CAN0.sendMsgBuf(canMsg3.can_id, STD_FRAME, canMsg3.can_dlc, canMsg3.data);
 
             xSemaphoreGive(xCanTxSemaphore);
         }
