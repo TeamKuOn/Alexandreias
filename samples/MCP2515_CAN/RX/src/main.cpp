@@ -127,7 +127,6 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
 
         if(xSemaphoreTake(xCanSemaphore, (TickType_t)10) == pdTRUE) {
             id = canMsg.can_id;
-            Serial.println(canMsg.can_id);
 
             can_data_type = (unsigned short)(id / 100);
 
