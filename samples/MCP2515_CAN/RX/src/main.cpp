@@ -1,8 +1,8 @@
 #define ESP32_DEVKIT
 // #define ATMEGA2560
 
-#define RX_RAW_DATA
-// #define RX_DECODED_DATA
+// #define RX_RAW_DATA
+#define RX_DECODED_DATA
 
 /* Main library */
 #include "Arduino.h"
@@ -61,6 +61,13 @@ void IRAM_ATTR MCP2515_Read_ISR() {
     portEXIT_CRITICAL_ISR(&canRxMutex);
 }
 
+double decodeBytes2Double(const uint8_t bytes[]) {
+    double result;
+    memcpy(&result, bytes, sizeof(double));
+    return result;
+}
+
+
 void TaskDisplayCANReceiveRes(void *pvParameters) {
 
     for(;;) {
@@ -94,7 +101,28 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
         }
 
         Serial.println();
+
 #elif defined(RX_DECODED_DATA)
+        char id[10];
+        char data[20];
+
+        if(xSemaphoreTake(xCanSemaphore, (TickType_t)10) == pdTRUE) {
+
+            if((canMsg.can_id & 0x80000000) == 0x80000000)     // Determine if ID is standard (11 bits) or extended (29 bits)
+                sprintf(id, "%.8lX", (canMsg.can_id & 0x1FFFFFFF));
+            else
+                sprintf(id, "%.3lX", canMsg.can_id);
+
+            sprintf(data, "%lf", decodeBytes2Double(canMsg.data));
+
+            xSemaphoreGive(xCanSemaphore);
+        }
+
+        Serial.print("ID: ");
+        Serial.print(id);
+        Serial.print(" Data: ");
+        Serial.println(data);
+
 #endif
 
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -119,7 +147,7 @@ void setup() {
 
     /* Task setting */
 #if defined(ESP32_DEVKIT)
-    xTaskCreateUniversal(TaskDisplayCANReceiveRes, "DisplayCANReceiveRes", 1024, NULL, PRIORITY_0, NULL, CORE_0);
+    xTaskCreateUniversal(TaskDisplayCANReceiveRes, "DisplayCANReceiveRes", 4096, NULL, PRIORITY_0, NULL, CORE_0);
 #elif defined(ATMEGA2560)
     xTaskCreate(TaskDisplayCANReceiveRes, "DisplayCANReceiveRes", 1024, NULL, PRIORITY_0, NULL);
 #endif
