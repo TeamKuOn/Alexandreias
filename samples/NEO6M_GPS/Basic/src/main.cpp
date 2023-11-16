@@ -23,8 +23,8 @@ portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 
 /* GPS settings */
 #if defined(ESP32_DEVKIT)
-#define BG96_RX 14
-#define BG96_TX 15
+#define BG96_RX 35
+#define BG96_TX 32
 #define BG96_RST 33
 #endif
 
@@ -60,24 +60,21 @@ void TaskGetGpsSignal(void *pvParameters){
         while(NEO6M.available() > 0){
             gps.encode(NEO6M.read());
 
-            if(gps.location.isUpdated()) {
-                if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
-                    gps_data.latitude = gps.location.lat();
-                    gps_data.longitude = gps.location.lng();
+            if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
+                gps_data.latitude = gps.location.lat();
+                gps_data.longitude = gps.location.lng();
 
-                    gps_data.date = gps.date.value();
-                    gps_data.time = gps.time.value();
+                gps_data.date = gps.date.value();
+                gps_data.time = gps.time.value();
 
-                    gps_data.speed = gps.speed.kmph();
-                    gps_data.course = gps.course.deg();
+                gps_data.speed = gps.speed.kmph();
+                gps_data.course = gps.course.deg();
 
-                    gps_data.altitude = gps.altitude.meters();
+                gps_data.altitude = gps.altitude.meters();
 
-                    gps_data.hdop = gps.hdop.value();
+                gps_data.hdop = gps.hdop.value();
 
-                    xSemaphoreGive(xSemaphore1);
-
-                }
+                xSemaphoreGive(xSemaphore1);
             }
         }
 
