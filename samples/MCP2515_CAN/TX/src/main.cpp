@@ -77,11 +77,13 @@ void makeFloatCanMsg(struct can_frame *canMsg, unsigned long can_id, float f) {
 }
 
 void TaskCANSend(void *pvParameters) {
+    double val_1 = 33.6673188;
+    double val_2 = 135.3545314;
 
     for(;;) {
 
-        makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, 33.6673188);
-        makeFloatCanMsg(&canMsg2, CAN_SEND_ID_2, 135.3545314);
+        makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, val_1);
+        makeFloatCanMsg(&canMsg2, CAN_SEND_ID_2, val_2);
 
         if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
             canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
