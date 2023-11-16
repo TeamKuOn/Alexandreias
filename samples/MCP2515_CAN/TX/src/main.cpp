@@ -60,7 +60,7 @@ byte canSendStatus2;
 
 
 
-void float2byte(float f, byte *byteArr) {
+void encode_float2byte(float f, byte *byteArr) {
     byte* bytes = (byte*) &f;
     for(int i = 0; i < sizeof(float); i++) {
         byteArr[i] = bytes[i];
@@ -72,7 +72,7 @@ void float2byte(float f, byte *byteArr) {
 
 void makeFloatCanMsg(struct can_frame *canMsg, unsigned long can_id, float f) {
     canMsg->can_id = can_id;
-    float2byte(f, canMsg->data);
+    encode_float2byte(f, canMsg->data);
     canMsg->can_dlc = sizeof(canMsg->data);
 }
 
