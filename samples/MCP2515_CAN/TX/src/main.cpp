@@ -131,7 +131,7 @@ void TaskCANSend(void *pvParameters) {
             xSemaphoreGive(xCanTxSemaphore);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
 
