@@ -57,13 +57,28 @@ struct GPS_DATA gps_data;
 void TaskGetGpsSignal(void *pvParameters){
 
     for(;;) {
-        if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
-            if (NEO6M.available()) {
-                gps.encode(NEO6M.read());
-                prev_sec = gps.time.second();
-            }
+        while(NEO6M.available() > 0){
+            gps.encode(NEO6M.read());
 
-            xSemaphoreGive(xSemaphore1);
+            if(gps.location.isUpdated()) {
+                if(xSemaphoreTake(xSemaphore1, (TickType_t)10) == pdTRUE) {
+                    gps_data.latitude = gps.location.lat();
+                    gps_data.longitude = gps.location.lng();
+
+                    gps_data.date = gps.date.value();
+                    gps_data.time = gps.time.value();
+
+                    gps_data.speed = gps.speed.kmph();
+                    gps_data.course = gps.course.deg();
+
+                    gps_data.altitude = gps.altitude.meters();
+
+                    gps_data.hdop = gps.hdop.value();
+
+                    xSemaphoreGive(xSemaphore1);
+
+                }
+            }
         }
 
         vTaskDelay(pdMS_TO_TICKS(30));
@@ -74,48 +89,33 @@ void TaskPrintData(void *pvParameters){
 
     for(;;) {
         if(xSemaphoreTake(xSemaphore2, (TickType_t)10) == pdTRUE) {
-            if(prev_sec != gps.time.second()) {
-                gps_data.latitude = gps.location.lat();
-                gps_data.longitude = gps.location.lng();
 
-                gps_data.date = gps.date.value();
-                gps_data.time = gps.time.value();
+            Serial.print("Latitude: ");
+            Serial.println(gps_data.latitude, 6);
+            Serial.print("Longitude: ");
+            Serial.println(gps_data.longitude, 6);
 
-                gps_data.speed = gps.speed.kmph();
-                gps_data.course = gps.course.deg();
+            Serial.print("Date: ");
+            Serial.println(gps_data.date);
+            Serial.print("Time: ");
+            Serial.println(gps_data.time);
 
-                gps_data.altitude = gps.altitude.meters();
+            Serial.print("Speed: ");
+            Serial.println(gps_data.speed);
+            Serial.print("Course: ");
+            Serial.println(gps_data.course);
 
-                gps_data.hdop = gps.hdop.value();
+            Serial.print("Altitude: ");
+            Serial.println(gps_data.altitude);
 
-                Serial.print("Latitude: ");
-                Serial.println(gps_data.latitude, 6);
-                Serial.print("Longitude: ");
-                Serial.println(gps_data.longitude, 6);
-
-                Serial.print("Date: ");
-                Serial.println(gps_data.date);
-                Serial.print("Time: ");
-                Serial.println(gps_data.time);
-
-                Serial.print("Speed: ");
-                Serial.println(gps_data.speed);
-                Serial.print("Course: ");
-                Serial.println(gps_data.course);
-
-                Serial.print("Altitude: ");
-                Serial.println(gps_data.altitude);
-
-                Serial.print("HDOP: ");
-                Serial.println(gps_data.hdop);
-
-                prev_sec = gps.time.second();
-            }
+            Serial.print("HDOP: ");
+            Serial.println(gps_data.hdop);
 
             xSemaphoreGive(xSemaphore2);
         }
 
-vTaskDelay(pdMS_TO_TICKS(400));
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
