@@ -61,9 +61,27 @@ void IRAM_ATTR MCP2515_Read_ISR() {
     portEXIT_CRITICAL_ISR(&canRxMutex);
 }
 
-double decodeBytes2Double(const uint8_t bytes[]) {
+int decode_Bytes2Int(const uint8_t bytes[]) {
+    int result;
+    memcpy(&result, bytes, sizeof(int));
+    return result;
+}
+
+float decode_Bytes2Float(const uint8_t bytes[]) {
+    float result;
+    memcpy(&result, bytes, sizeof(float));
+    return result;
+}
+
+double decode_Bytes2Double(const uint8_t bytes[]) {
     double result;
     memcpy(&result, bytes, sizeof(double));
+    return result;
+}
+
+unsigned int decode_Bytes2UInt(const uint8_t bytes[]) {
+    unsigned int result;
+    memcpy(&result, bytes, sizeof(unsigned int));
     return result;
 }
 
@@ -103,17 +121,33 @@ void TaskDisplayCANReceiveRes(void *pvParameters) {
         Serial.println();
 
 #elif defined(RX_DECODED_DATA)
-        char id[10];
+        unsigned long id = 0;
         char data[20];
+        unsigned short can_data_type = 0;
 
         if(xSemaphoreTake(xCanSemaphore, (TickType_t)10) == pdTRUE) {
+            id = canMsg.can_id;
+            Serial.println(canMsg.can_id);
 
-            if((canMsg.can_id & 0x80000000) == 0x80000000)     // Determine if ID is standard (11 bits) or extended (29 bits)
-                sprintf(id, "%.8lX", (canMsg.can_id & 0x1FFFFFFF));
-            else
-                sprintf(id, "%.3lX", canMsg.can_id);
+            can_data_type = (unsigned short)(id / 100);
 
-            sprintf(data, "%lf", decodeBytes2Double(canMsg.data));
+            switch(can_data_type) {
+                case 1:
+                    sprintf(data, "%d", decode_Bytes2Int(canMsg.data));
+                    break;
+                case 2:
+                    sprintf(data, "%f", decode_Bytes2Float(canMsg.data));
+                    break;
+                case 3:
+                    sprintf(data, "%lf", decode_Bytes2Double(canMsg.data));
+                    break;
+                case 4:
+                    sprintf(data, "%u", decode_Bytes2UInt(canMsg.data));
+                default:
+                    sprintf(data, "Unknown data type");
+                    break;
+            }
+
 
             xSemaphoreGive(xCanSemaphore);
         }

@@ -54,10 +54,10 @@ struct can_frame canMsg1;
 struct can_frame canMsg2;
 struct can_frame canMsg3;
 
-#define CAN_SEND_ID_0 0x0F5     // 0x0F5 = 245
-#define CAN_SEND_ID_1 0x0F6     // 0x0F6 = 246
-#define CAN_SEND_ID_2 0x0F7     // 0x0F7 = 247
-#define CAN_SEND_ID_3 0x0F8     // 0x0F8 = 248
+#define CAN_SEND_ID_0 0x065     // 0101
+#define CAN_SEND_ID_1 0x0C9     // 0201
+#define CAN_SEND_ID_2 0x12D     // 0301
+#define CAN_SEND_ID_3 0x191     // 0401
 
 byte canSendStatus0;
 byte canSendStatus1;
