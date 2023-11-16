@@ -4,6 +4,7 @@
 #include "Arduino.h"
 
 /* Communication library */
+#include <SoftwareSerial.h>
 
 /* Device library */
 #include <TinyGPS++.h>
@@ -21,8 +22,17 @@ SemaphoreHandle_t xSemaphore2 = xSemaphoreCreateMutex();
 portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 
 /* GPS settings */
+#if defined(ESP32_DEVKIT)
+#define BG96_RX 14
+#define BG96_TX 15
+#define BG96_RST 33
+#endif
+
+#if defined(ESP32_DEVKIT)
+SoftwareSerial NEO6M;
+#endif
+
 TinyGPSPlus gps;
-#define NEO6M Serial2
 #define GPS_BAUD 9600
 unsigned int prev_sec = 0;
 
@@ -105,7 +115,7 @@ void TaskPrintData(void *pvParameters){
             xSemaphoreGive(xSemaphore2);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(400));
+vTaskDelay(pdMS_TO_TICKS(400));
     }
 }
 
@@ -113,7 +123,13 @@ void TaskPrintData(void *pvParameters){
 void setup(){
     /* Serial setting */
     Serial.begin(115200);
-    NEO6M.begin(GPS_BAUD);
+#if defined(ESP32_DEVKIT)
+    NEO6M.begin(GPS_BAUD, SWSERIAL_8N1, BG96_RX, BG96_TX, false, 256);
+#endif
+
+    while(!NEO6M.available() > 0) {
+        Serial.println("Waiting for GPS signal...");
+    }
 
     /* Task setting */
 #if defined(ESP32_DEVKIT)
