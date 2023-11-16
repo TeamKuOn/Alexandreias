@@ -60,8 +60,8 @@ byte canSendStatus2;
 
 
 
-void encode_double2byte(double f, byte *byteArr) {
-    byte* bytes = (byte*) &f;
+void encode_double2byte(double d, byte *byteArr) {
+    byte* bytes = (byte*) &d;
     for(int i = 0; i < sizeof(double); i++) {
         byteArr[i] = bytes[i];
         if(i > MAX_DATA_LEN) {
