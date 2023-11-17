@@ -28,9 +28,8 @@ TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite spr = TFT_eSprite(&tft);
 
 #define DARKER_GREY 0x18E3
-#define ROTATE_SIDE 2
-
-#define LOOP_DELAY 0
+#define ROTATE_SIDE 0
+unsigned char DEFAULT_FONT = 4;
 
 uint32_t runTime = 0;       // time for next update
 
@@ -54,16 +53,16 @@ void ringMeter(int x, int y, int r, int val, const char *units){
     char value[10];
 
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setTextSize(2);
     sprintf(value, "%d", val);
-    tft.drawString(value, x - 20, y - 10, 4);
-    tft.drawString(units, x + 20, y + 10, 4);
+    tft.setTextSize(4);
+    tft.drawString(value, x - 20, y - 10, DEFAULT_FONT);
+    tft.setTextSize(2);
+    tft.drawString(units, x + 20, y + 10, DEFAULT_FONT);
 
     if(initMeter){
         initMeter = false;
         last_angle = 30;
         tft.fillCircle(x, y, r, DARKER_GREY);
-        // tft.drawSmoothCircle(x, y, r, TFT_SILVER, DARKER_GREY);
         uint16_t tmp = r - 3;
         tft.drawArc(x, y, tmp, tmp - tmp / 5, last_angle, 330, TFT_BLACK, DARKER_GREY);
     }
