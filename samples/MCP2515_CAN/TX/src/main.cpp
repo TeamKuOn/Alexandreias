@@ -19,6 +19,8 @@
 #define CORE_0 0
 #define CORE_1 1
 
+#define PRIORITY_3 3
+#define PRIORITY_2 2
 #define PRIORITY_1 1
 #define PRIORITY_0 0
 
@@ -111,29 +113,54 @@ void makeIntCanMsg(struct can_frame *canMsg, unsigned long can_id, int i) {
     canMsg->can_dlc = sizeof(canMsg->data);
 }
 
-void TaskCANSend(void *pvParameters) {
+void TaskCANSend1(void *pvParameters) {
     int val_0 = 123;
-    float val_1 = 33.6673188;
-    double val_2 = 135.3545314;
 
     for(;;) {
 
         makeIntCanMsg(&canMsg0, CAN_SEND_ID_0, val_0);
-        makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, val_1);
-        makeDoubleCanMsg(&canMsg2, CAN_SEND_ID_2, val_2);
 
         if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
             canSendStatus0 = CAN0.sendMsgBuf(canMsg0.can_id, STD_FRAME, canMsg0.can_dlc, canMsg0.data);
-            Serial.print("");
-            canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
-            Serial.print("");
-            canSendStatus2 = CAN0.sendMsgBuf(canMsg2.can_id, STD_FRAME, canMsg2.can_dlc, canMsg2.data);
-            Serial.print("");
 
             xSemaphoreGive(xCanTxSemaphore);
         }
 
         vTaskDelay(pdMS_TO_TICKS(200));
+    }
+}
+
+void TaskCANSend2(void *pvParameters) {
+    float val_1 = 33.6673188;
+
+    for(;;) {
+
+        makeFloatCanMsg(&canMsg1, CAN_SEND_ID_1, val_1);
+
+        if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
+            canSendStatus1 = CAN0.sendMsgBuf(canMsg1.can_id, STD_FRAME, canMsg1.can_dlc, canMsg1.data);
+
+            xSemaphoreGive(xCanTxSemaphore);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(300));
+    }
+}
+
+void TaskCANSend3(void *pvParameters) {
+    double val_2 = 135.3545314;
+
+    for(;;) {
+
+        makeDoubleCanMsg(&canMsg2, CAN_SEND_ID_2, val_2);
+
+        if(xSemaphoreTake(xCanTxSemaphore, (TickType_t)1) == pdTRUE) {
+            canSendStatus2 = CAN0.sendMsgBuf(canMsg2.can_id, STD_FRAME, canMsg2.can_dlc, canMsg2.data);
+
+            xSemaphoreGive(xCanTxSemaphore);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(400));
     }
 }
 
@@ -190,7 +217,9 @@ void setup() {
 
     /* Task setting */
 #if defined(ESP32_DEVKIT)
-    xTaskCreateUniversal(TaskCANSend, "CANSend", 2048, NULL, PRIORITY_1, NULL, CORE_0);
+    xTaskCreateUniversal(TaskCANSend1, "CANSend1", 2048, NULL, PRIORITY_3, NULL, CORE_0);
+    xTaskCreateUniversal(TaskCANSend2, "CANSend2", 2048, NULL, PRIORITY_2, NULL, CORE_0);
+    xTaskCreateUniversal(TaskCANSend3, "CANSend3", 2048, NULL, PRIORITY_1, NULL, CORE_0);
     xTaskCreateUniversal(TaskDisplayCANSendRes, "DisplayCANSendRes", 1024, NULL, PRIORITY_0, NULL, CORE_0);
 #elif defined(ATMEGA2560)
     xTaskCreate(TaskCANSend, "CANSend", 1024, NULL, PRIORITY_1, NULL);
