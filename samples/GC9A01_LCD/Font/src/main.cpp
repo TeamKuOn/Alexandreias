@@ -1,5 +1,8 @@
 #define ESP32_DEVKIT
 
+#define DEBUG_DEFAULT_FONT
+// #define DEBUG_SELECTED_FONT
+
 /* Main library */
 #include "Arduino.h"
 
@@ -27,15 +30,20 @@ portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite spr = TFT_eSprite(&tft);
 
-#define ROTATE_SIDE 2
+#define ROTATE_SIDE 0
 
 static int16_t xpos = tft.width() / 4;
 static int16_t ypos = tft.height() / 4;
 static uint8_t radius = xpos;
 
 // Font setting
+#if defined(DEBUG_DEFAULT_FONT)
+#define DEFAULT_FONT 4
+// unsigned char DEFAULT_FONT = 4;
+#elif defined(DEBUG_SELECTED_FONT)
 #include "NotoSansBold15.h"
 #include "NotoSansBold36.h"
+#endif
 #define SPR_W 120
 #define SPR_H 160
 
@@ -57,11 +65,14 @@ void TaskDisplayData(void *pvParameters){
 
         spr.fillSprite(TFT_GREEN);
 
-        // spr.setTextFont(1);
         spr.setTextColor(TFT_WHITE, TFT_BLACK, true);
         spr.setTextSize(3);
         spr.setTextDatum(MC_DATUM);
+#if defined(DEBUG_DEFAULT_FONT)
+        spr.drawString(value, 40, 40, DEFAULT_FONT);
+#elif defined(DEBUG_SELECTED_FONT)
         spr.drawString(value, 40, 40);
+#endif
 
         spr.pushSprite(xpos, ypos);
 
@@ -93,7 +104,9 @@ void setup(){
     tft.fillScreen(TFT_BLACK);
 
     spr.createSprite(SPR_W, SPR_H);
+#if defined(DEBUG_SELECTED_FONT)
     spr.loadFont(NotoSansBold36);
+#endif
 
     /* Random seed */
     randomSeed(millis());
