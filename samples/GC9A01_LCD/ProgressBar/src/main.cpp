@@ -55,9 +55,9 @@ void ringMeter(int x, int y, int r, int val, const char *units){
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     sprintf(value, "%d", val);
     tft.setTextSize(4);
-    tft.drawString(value, x - 20, y - 10, DEFAULT_FONT);
-    tft.setTextSize(2);
-    tft.drawString(units, x + 20, y + 10, DEFAULT_FONT);
+    tft.drawString(value, x - 50, y - 50, DEFAULT_FONT);
+    tft.setTextSize(1);
+    tft.drawString(units, x - 20, y + 50, DEFAULT_FONT);
 
     if(initMeter){
         initMeter = false;
@@ -106,7 +106,7 @@ void TaskDisplayData(void *pvParameters){
 
     for(;;) {
         if(xSemaphoreTake(xSemaphore2, (TickType_t)10) == pdTRUE) {
-            ringMeter(xpos, ypos, radius, dummy_val, "W"); // Draw analogue meter
+            ringMeter(xpos, ypos, radius, dummy_val, "km/h"); // Draw analogue meter
 
             xSemaphoreGive(xSemaphore2);
         }
