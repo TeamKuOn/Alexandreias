@@ -21,7 +21,6 @@
 /* Semaphore & Mutex declaration */
 SemaphoreHandle_t xSemaphore1 = xSemaphoreCreateMutex();
 SemaphoreHandle_t xSemaphore2 = xSemaphoreCreateMutex();
-portMUX_TYPE Mutex = portMUX_INITIALIZER_UNLOCKED;
 
 /* GC9A01 setting*/
 TFT_eSPI tft = TFT_eSPI();
