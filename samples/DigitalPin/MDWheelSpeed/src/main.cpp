@@ -7,6 +7,7 @@
 /* Communication library */
 
 /* Device library */
+#include <LiquidCrystal_I2C.h>
 
 /* Task declaration */
 #define CORE_0 0
@@ -38,6 +39,9 @@ double WHEEL_DIAMETER = 0.4;     // wheel diameter [m]
 double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * PI;   // wheel circumference [m]
 double wheel_rotate_speed_mps = 0.0;
 double wheel_rotate_speed_kmph = 0.0;
+
+/* LCD monitor */
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 
 
@@ -79,7 +83,9 @@ void TaskSpeedCalc(void *pvParameters){
 
         wheel_rotate_speed_mps = WHEEL_CIRCUMFERENCE / (psuedo_rotate_micros / 1000000.0);
         if(xSemaphoreTake(accessSemaphore, (TickType_t)10 ) == pdTRUE) {
-            wheel_rotate_speed_kmph = wheel_rotate_speed_mps * 3.6;
+            if(wheel_rotate_speed_mps < 40.0){
+                wheel_rotate_speed_kmph = wheel_rotate_speed_mps * 3.6;
+            }
 
             xSemaphoreGive(accessSemaphore);
         }
@@ -92,7 +98,11 @@ void TaskPrint(void *pvParameters){
 
     for(;;) {
         if(xSemaphoreTake(accessSemaphore2, (TickType_t)10 ) == pdTRUE) {
-            Serial.println(wheel_rotate_speed_kmph, 4);
+            //Serial.println(wheel_rotate_speed_kmph, 4);
+            lcd.setCursor(0, 1);
+            lcd.print(wheel_rotate_speed_kmph);
+            lcd.setCursor(4, 1);
+            lcd.print(" [km/h]");
 
             xSemaphoreGive(accessSemaphore2);
         }
@@ -113,6 +123,13 @@ void setup(){
     xTaskCreateUniversal(TaskSpeedCalc, "TaskSpeedCalc", 4096, NULL, PRIORITY_1, NULL, CORE_0);
     xTaskCreateUniversal(TaskPrint, "TaskPrint", 4096, NULL, PRIORITY_0, NULL, CORE_0);
 #endif
+
+    /* LCD monitor setting */
+    lcd.init();
+    lcd.backlight();
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Speed");
 
     /* Interrupt setting */
     attachInterrupt(digitalPinToInterrupt(PULSE_INT_PIN), PULSE_SIGNAL_ISR, RISING);
