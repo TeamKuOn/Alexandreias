@@ -7,7 +7,6 @@
 /* Communication library */
 
 /* Device library */
-#include <LiquidCrystal_I2C.h>
 
 /* Task declaration */
 #define CORE_0 0
@@ -40,8 +39,6 @@ double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * PI;   // wheel circumference [m]
 double wheel_rotate_speed_mps = 0.0;
 double wheel_rotate_speed_kmph = 0.0;
 
-/* LCD monitor */
-LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 
 
@@ -98,11 +95,7 @@ void TaskPrint(void *pvParameters){
 
     for(;;) {
         if(xSemaphoreTake(accessSemaphore2, (TickType_t)10 ) == pdTRUE) {
-            //Serial.println(wheel_rotate_speed_kmph, 4);
-            lcd.setCursor(0, 1);
-            lcd.print(wheel_rotate_speed_kmph);
-            lcd.setCursor(4, 1);
-            lcd.print(" [km/h]");
+            Serial.println(wheel_rotate_speed_kmph, 4);
 
             xSemaphoreGive(accessSemaphore2);
         }
@@ -124,12 +117,6 @@ void setup(){
     xTaskCreateUniversal(TaskPrint, "TaskPrint", 4096, NULL, PRIORITY_0, NULL, CORE_0);
 #endif
 
-    /* LCD monitor setting */
-    lcd.init();
-    lcd.backlight();
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Speed");
 
     /* Interrupt setting */
     attachInterrupt(digitalPinToInterrupt(PULSE_INT_PIN), PULSE_SIGNAL_ISR, RISING);
